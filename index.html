@@ -72,16 +72,16 @@ resize();
 let bgToggle=false;
 setInterval(()=>bgToggle=!bgToggle,60000);
 
-/* ===== BACKGROUND IMAGES ===== */
-const bgImages=["bg.png","goonerola.png"];
-let bgIndex=0;
-const bgImg=new Image();
-bgImg.src=bgImages[0];
+/* ===== IMAGES ===== */
+const img1=new Image();
+const img2=new Image();
+img1.src="bg.png";
+img2.src="goonerola.png";
 
-setInterval(()=>{
-  bgIndex=(bgIndex+1)%bgImages.length;
-  bgImg.src=bgImages[bgIndex];
-},60000);
+let imgA={x:100,y:100,vx:2,vy:1.5,rot:0};
+let imgB={x:400,y:300,vx:-1.8,vy:2,rot:0};
+
+const imgSize=120;
 
 /* ===== MOUSE ===== */
 let mouse={x:cx,y:cy};
@@ -113,33 +113,14 @@ setInterval(()=>{
   glitchCount=0;
 },3500);
 
-/* ===== DONUT 1 ===== */
-const donut1=[...Array(700)].map(()=>({
+/* ===== DONUT ===== */
+const donut=[...Array(700)].map(()=>({
   a:Math.random()*Math.PI*2,
   r:90+Math.random()*120,
   s:1.2+Math.random()*1.5,
   h:Math.random()*360,
   l:Math.random()*Math.PI*2
 }));
-
-/* ===== DONUT 2 ===== */
-function drawDonut2(){
-  ctx.save();
-  ctx.translate(cx,cy);
-
-  const t=time*0.8;
-  for(let i=0;i<300;i++){
-    const a=i/300*Math.PI*2;
-    const r=180+Math.sin(time*2+i)*30;
-    const x=Math.cos(a+t)*r;
-    const y=Math.sin(a+t)*r;
-
-    ctx.fillStyle=`hsla(${(i*4+time*80)%360},80%,60%,0.7)`;
-    ctx.fillRect(x,y,2,2);
-  }
-
-  ctx.restore();
-}
 
 let time=0;
 let rotation=0;
@@ -167,16 +148,36 @@ function loop(){
   time+=0.016;
   rotation+=0.02;
 
-  // background swap
+  // background color swap
   document.body.style.background = bgToggle ? "#c9b24a" : "#000000";
 
-  // draw background image
-  if(bgImg.complete){
-    ctx.drawImage(bgImg,0,0,w,h);
-  }
+  ctx.clearRect(0,0,w,h);
 
-  /* ===== DONUT 1 ===== */
-  donut1.forEach(p=>{
+  /* ===== MOVE IMAGES (DVD STYLE) ===== */
+  [imgA,imgB].forEach(obj=>{
+    obj.x+=obj.vx;
+    obj.y+=obj.vy;
+    obj.rot+=0.01;
+
+    if(obj.x<0 || obj.x+imgSize>w) obj.vx*=-1;
+    if(obj.y<0 || obj.y+imgSize>h) obj.vy*=-1;
+  });
+
+  // draw images
+  ctx.save();
+  ctx.translate(imgA.x+imgSize/2,imgA.y+imgSize/2);
+  ctx.rotate(imgA.rot);
+  ctx.drawImage(img1,-imgSize/2,-imgSize/2,imgSize,imgSize);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(imgB.x+imgSize/2,imgB.y+imgSize/2);
+  ctx.rotate(-imgB.rot);
+  ctx.drawImage(img2,-imgSize/2,-imgSize/2,imgSize,imgSize);
+  ctx.restore();
+
+  /* ===== DONUT ===== */
+  donut.forEach(p=>{
     p.a+=0.02;
 
     let wave=Math.sin(time+p.l)*40;
@@ -193,9 +194,6 @@ function loop(){
     ctx.arc(cx+x,cy+y,p.s,0,Math.PI*2);
     ctx.fill();
   });
-
-  /* ===== DONUT 2 ===== */
-  drawDonut2();
 
   /* glitch burst visibility */
   let visible=true;
