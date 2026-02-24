@@ -143,17 +143,45 @@ function drawGlitchText(text){
   ctx.fillText(text,2+jx,4+jy);
 }
 
+/* ===== CRT / VHS SHADER (ADDED) ===== */
+function drawVHS(){
+  // scanlines
+  for(let y=0;y<h;y+=3){
+    ctx.fillStyle="rgba(0,0,0,0.15)";
+    ctx.fillRect(0,y,w,1);
+  }
+
+  // RGB shift
+  const shift=Math.sin(time*4)*2;
+  ctx.globalCompositeOperation="screen";
+  ctx.drawImage(fx,shift,0);
+  ctx.drawImage(fx,-shift,0);
+  ctx.globalCompositeOperation="source-over";
+
+  // noise
+  for(let i=0;i<200;i++){
+    ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.04})`;
+    ctx.fillRect(Math.random()*w,Math.random()*h,1,1);
+  }
+
+  // vignette
+  const grad=ctx.createRadialGradient(cx,cy,w*0.2,cx,cy,w*0.7);
+  grad.addColorStop(0,"rgba(0,0,0,0)");
+  grad.addColorStop(1,"rgba(0,0,0,0.4)");
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,w,h);
+}
+
 /* ===== LOOP ===== */
 function loop(){
   time+=0.016;
   rotation+=0.02;
 
-  // background color swap
   document.body.style.background = bgToggle ? "#c9b24a" : "#000000";
 
   ctx.clearRect(0,0,w,h);
 
-  /* ===== MOVE IMAGES (DVD STYLE) ===== */
+  /* ===== MOVE IMAGES ===== */
   [imgA,imgB].forEach(obj=>{
     obj.x+=obj.vx;
     obj.y+=obj.vy;
@@ -163,7 +191,6 @@ function loop(){
     if(obj.y<0 || obj.y+imgSize>h) obj.vy*=-1;
   });
 
-  // draw images
   ctx.save();
   ctx.translate(imgA.x+imgSize/2,imgA.y+imgSize/2);
   ctx.rotate(imgA.rot);
@@ -195,7 +222,6 @@ function loop(){
     ctx.fill();
   });
 
-  /* glitch burst visibility */
   let visible=true;
   if(glitchBurst){
     visible=Math.random()>0.5;
@@ -203,9 +229,7 @@ function loop(){
     if(glitchCount>10) glitchBurst=false;
   }
 
-  /* ===== TEXT MORPH ===== */
   if(visible){
-
     const stretchX = 1 + Math.sin(time*5)*0.5;
     const stretchY = 1 + Math.cos(time*4)*0.4;
 
@@ -225,15 +249,16 @@ function loop(){
     ctx.shadowBlur=30;
 
     drawGlitchText(memes[memeIndex]);
-
     ctx.restore();
   }
 
-  /* flash glitch */
   if(Math.random()<0.02){
     ctx.fillStyle="rgba(255,255,255,0.25)";
     ctx.fillRect(0,0,w,h);
   }
+
+  // APPLY CRT SHADER (ADDED)
+  drawVHS();
 
   requestAnimationFrame(loop);
 }
